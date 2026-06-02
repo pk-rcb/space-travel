@@ -1,33 +1,41 @@
-# Space Travel Platform
+# StarRoute: Distributed Space Travel Platform
 
-A full-stack web application designed to schedule, manage, and book interplanetary space flights. The project features a resilient architecture tailored for high concurrency, ensuring that double-booking of seats does not occur even under heavy load.
+StarRoute is a full-stack, distributed web application originally conceived as an advanced Object-Oriented Programming (OOP) assignment and subsequently scaled into a highly concurrent, production-ready system. It handles the scheduling, booking, and management of commercial interplanetary flights.
 
-## Architecture & Tech Stack
+The core challenge this platform solves is the **"Thundering Herd"** problem in seat reservations. By leveraging a distributed lock mechanism and asynchronous message queues, the system ensures that high-traffic events (e.g., a flash sale on tickets to Mars) do not result in double-booking or backend server crashes.
 
-The platform is divided into a modern frontend client and a high-performance C++ backend. 
+## System Architecture & Phased Implementation
 
-**Frontend**
-* **React & Vite:** Provides a fast, responsive user interface.
-* **Vanilla CSS:** Custom styling for a dynamic, space-themed aesthetic (rocket ship seat maps, interactive dashboards).
-* **Context API:** Manages global state such as flight schedules and real-time updates.
+The platform was built following a strict five-phase distributed systems approach, decoupling the data layer, the business logic, and the web interface.
 
-**Backend**
-* **Drogon (C++):** An incredibly fast C++ web framework used to handle API requests with minimal overhead.
-* **PostgreSQL:** The primary relational database for persistent storage of flights, tickets, and passenger data.
-* **Redis:** Used as a distributed lock mechanism. When a user selects a seat, Redis places a temporary 5-minute hold on it to prevent concurrent users from attempting to book the same seat.
-* **RabbitMQ:** An asynchronous message broker. Once a seat is locked in Redis, the booking payload is published to a RabbitMQ queue for processing, preventing backend bottlenecks during traffic spikes.
+### Phase 1: The Foundation (Data Layer & Core OOP)
+The original in-memory C++ static vectors were completely stripped out and replaced with a robust relational database.
+* **PostgreSQL:** Acts as the single source of truth for all `Planets`, `Travellers`, `Tickets`, and `Flights`.
+* **libpqxx & DAOs:** Data Access Objects in C++ handle all SQL transactions, allowing the original OOP classes (`Traveller`, `Astronaut`, `Commander`, `Planet`, `Ticket`) to seamlessly hydrate their state from persistent storage.
 
-**Core Workflow:**
-1. Admin schedules a flight in the Command Center (stored in PostgreSQL).
-2. Passenger selects a seat on the booking interface.
-3. Backend checks PostgreSQL to ensure it's not permanently booked, then requests a lock in Redis.
-4. If the lock is acquired, the booking request is pushed to RabbitMQ.
-5. A background worker (or consumer) eventually dequeues the message and finalizes the booking in PostgreSQL.
+### Phase 2 & 3: API Gateway, Caching, and Asynchronous Processing
+To protect the database from race conditions and handle massive concurrency, the backend was decoupled into an API Gateway and an asynchronous processing engine.
+* **Drogon (C++):** An ultra-fast C++ web framework acts as the HTTP API Gateway, providing REST endpoints for the frontend.
+* **Redis Distributed Locking:** When a user clicks to book a seat, Drogon immediately issues a `SETNX` (Set if Not Exists) command in Redis with a 5-minute TTL. This instantly locks the seat. If 100 users click the same seat at the same millisecond, Redis blocks 99 of them, returning an HTTP 409 Conflict.
+* **RabbitMQ:** The single successful booking request is pushed to a RabbitMQ message exchange, allowing the Drogon API to immediately return a 202 Accepted response. 
+* **Background Worker:** A standalone C++ worker process continuously consumes messages from RabbitMQ, validates the pricing math (`Price = (Distance * K) / Days_Remaining`), and safely commits the final transaction to PostgreSQL without blocking the main web threads.
 
-## Local Setup
+### Phase 4: Frontend Web Interface
+* **React & Vite:** A fast, responsive Single Page Application (SPA).
+* **Vanilla CSS:** Features a custom, dynamic space-themed aesthetic. The interface includes interactive, rocket-shaped seat maps, dynamic pricing calculations, and real-time visual feedback for seat statuses (Available, Selected, Held in Redis, Permanently Booked).
+
+## Original OOP Domain Logic (CS253)
+The core domain logic adheres to the original CS253 specifications:
+* **Travellers:** Implements an inheritance hierarchy (`Traveller` -> `Passenger`, `Astronaut`, `Commander`).
+* **Crew Requirements:** Each space travel mission strictly requires one assigned Astronaut and one assigned Commander.
+* **Pricing Engine:** Ticket prices are calculated dynamically based on the Euclidean distance between the source and destination planets, divided by the days remaining until departure.
+
+---
+
+## Local Setup & Installation
 
 ### 1. Prerequisites
-Ensure you have the following installed on your system:
+Ensure you have the following installed and running on your system:
 * Node.js (v18+)
 * PostgreSQL
 * Redis Server
@@ -37,25 +45,25 @@ Ensure you have the following installed on your system:
 
 ### 2. Backend Configuration
 1. Navigate to the `space-travel-backend` directory.
-2. Create a file named `backend_config.json` in the root of the backend folder:
+2. Create a configuration file named `backend_config.json` in the root of the backend folder to securely store your credentials (this file is git-ignored):
    ```json
    {
      "db_connection": "dbname=space_travel user=postgres password=YOUR_PASSWORD host=localhost port=5432",
-     "redis_connection": "tcp://127.0.0.1:6379",
+     "redis_connection": "tcp://localhost:6379",
      "rabbitmq_host": "localhost",
      "rabbitmq_port": 5672,
      "rabbitmq_user": "guest",
      "rabbitmq_pass": "guest"
    }
    ```
-3. Initialize the database schema in PostgreSQL (tables: Flights, Tickets, Travellers, Planets).
+3. Initialize the database schema in PostgreSQL (Tables: `Flights`, `Tickets`, `Travellers`, `Planets`).
 4. Compile the application using CMake:
    ```bash
    mkdir build && cd build
    cmake ..
    make
    ```
-5. Run the generated executable. It will listen on `http://0.0.0.0:8080`.
+5. Run the generated executable. The API will listen on `http://0.0.0.0:8080`.
 
 ### 3. Frontend Configuration
 1. Navigate to the `frontend` directory.
