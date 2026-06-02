@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+bin/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+
+# Configuration files with secrets
+backend_config.json
+.env

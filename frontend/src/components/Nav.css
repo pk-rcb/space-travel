@@ -1,0 +1,90 @@
+/* ================================================================
+   Nav.css — Main Navigation Tab Bar
+   ================================================================ */
+
+.main-nav {
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.main-nav-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  padding: 0 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.main-nav-inner::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.4rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: color 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  flex-shrink: 0;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: #f8fafc;
+}
+
+.nav-tab-active {
+  color: var(--purple-vivid);
+  border-bottom-color: var(--purple-vivid);
+  background: #eff6ff;
+}
+
+.nav-tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--purple-vivid);
+  border-radius: 2px 2px 0 0;
+}
+
+.nav-tab-icon { font-size: 1.15rem; line-height: 1; }
+
+.nav-tab-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.nav-tab-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.nav-tab-sub {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+@media (max-width: 580px) {
+  .main-nav-inner { padding: 0 0.25rem; }
+  .nav-tab        { padding: 0.75rem 0.9rem; gap: 0.4rem; }
+  .nav-tab-sub    { display: none; }
+  .nav-tab-label  { font-size: 0.75rem; }
+}

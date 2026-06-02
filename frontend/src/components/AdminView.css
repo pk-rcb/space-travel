@@ -1,0 +1,320 @@
+/* ================================================================
+   AdminView.css — Mission Command Center Styles
+   ================================================================ */
+
+.admin-view {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+/* ─── Page header ─── */
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-page-icon { font-size: 2.4rem; line-height: 1; }
+
+.admin-page-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.admin-page-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.2rem 0 0;
+}
+
+/* ─── Two-column layout ─── */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 740px) {
+  .admin-layout { grid-template-columns: 1fr; }
+}
+
+/* ─── Card ─── */
+.admin-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.admin-card-alt {
+  background: #f8fafc;
+}
+
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-card-icon { font-size: 1.2rem; }
+
+.admin-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ─── Form ─── */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  flex: 1;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-input,
+.form-select {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  padding: 0.65rem 0.85rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input[type="date"] { color-scheme: light; }
+
+.form-input::placeholder { color: var(--text-muted); }
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--purple-vivid);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Planet row */
+.form-planet-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.planet-row-arrow {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  padding-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Custom select */
+.form-select-wrap {
+  position: relative;
+}
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.2rem;
+  cursor: pointer;
+}
+
+.form-select option {
+  background: #ffffff;
+  color: var(--text-primary);
+}
+
+.select-chevron {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+/* Crew row */
+.form-crew-row {
+  display: flex;
+  gap: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .form-planet-row,
+  .form-crew-row { flex-direction: column; }
+  .planet-row-arrow { display: none; }
+}
+
+/* Status messages */
+.form-msg {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.form-msg-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #fca5a5;
+}
+
+.form-msg-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #6ee7b7;
+}
+
+/* Buttons */
+.form-submit-btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--purple-vivid);
+  color: #fff;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.form-submit-btn:hover:not(:disabled) {
+  background: var(--purple-soft);
+}
+
+.form-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-loading { opacity: 0.7; }
+
+.form-link-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  color: var(--purple-vivid);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.form-link-btn:hover {
+  background: #f8fafc;
+}
+
+.btn-spinner {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: admin-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+
+/* ─── Scheduled list ─── */
+.admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.admin-empty-icon { font-size: 2rem; }
+
+.scheduled-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.scheduled-item {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0.85rem;
+  transition: border-color 0.2s;
+}
+
+.scheduled-item-active {
+  border-color: var(--purple-vivid);
+  background: #eff6ff;
+}
+
+.scheduled-route {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.scheduled-planet-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scheduled-arrow-icon { color: var(--text-muted); font-size: 0.85rem; }
+
+.active-pill {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: #eff6ff;
+  border: 1px solid var(--purple-soft);
+  color: var(--purple-vivid);
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+}
+
+.scheduled-meta {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}

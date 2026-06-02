@@ -1,0 +1,481 @@
+/* ================================================================
+   SeatMap.css — Space Travel Booking Seat Map Styles
+   ================================================================ */
+
+/* ─── Section wrapper ─── */
+.seatmap-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem 2rem;
+}
+
+.seatmap-container {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 720px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* ─── Header ─── */
+.seatmap-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.seatmap-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.2rem;
+  letter-spacing: -0.02em;
+}
+
+.seatmap-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.seatmap-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.stat-available { background: #f8fafc; color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+.stat-selected  { background: #eff6ff; color: var(--purple-vivid); border: 1px solid var(--purple-soft); }
+.stat-held      { background: #fef9c3; color: #ca8a04; border: 1px solid #fde047; }
+.stat-booked    { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+
+/* ─── Rocket Vessel ─── */
+.rocket-vessel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem 0;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+}
+
+/* ─── Craft nose ─── */
+.craft-nose {
+  width: 100%;
+  max-width: 480px;
+  height: 140px;
+  background: linear-gradient(to bottom, #f1f5f9, #ffffff);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 1.5rem;
+  position: relative;
+  /* simulating a border on the sides is tricky with clip-path, we'll use a shadow on the wrapper if needed, or rely on the clean shape */
+}
+
+.nose-cone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+  clip-path: polygon(50% 0%, 45% 25%, 55% 25%);
+}
+
+.nose-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: var(--text-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  font-weight: 700;
+  z-index: 1;
+}
+
+/* ─── Rocket Body ─── */
+.rocket-body {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-left: 3px solid #e2e8f0;
+  border-right: 3px solid #e2e8f0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+}
+
+/* ─── Seat Grid ─── */
+.seatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  width: 1rem;
+  text-align: center;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.seat-pair {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.seat-aisle {
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.aisle-line {
+  width: 100%;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ─── Seat Button ─── */
+.seat-btn {
+  flex: 1;
+  min-height: 72px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  padding: 0.5rem 0.25rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+.seat-btn::before {
+  display: none;
+}
+
+/* Available */
+.seat-available {
+  background: #f8fafc;
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+.seat-available:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: var(--purple-vivid);
+  color: var(--purple-vivid);
+  transform: translateY(-2px);
+}
+.seat-available:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Selected */
+.seat-selected {
+  background: #eff6ff;
+  border-color: var(--purple-vivid);
+  color: var(--purple-vivid);
+}
+.seat-selected:hover:not(:disabled) {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+.seat-selected:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Held */
+.seat-held {
+  background: #fef9c3;
+  border-color: #eab308;
+  color: #ca8a04;
+}
+
+/* Booked */
+.seat-booked {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #ef4444;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+/* Loading */
+.seat-loading {
+  animation: spin-pulse 0.8s ease-in-out infinite;
+}
+@keyframes spin-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ─── Seat inner elements ─── */
+.seat-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.seat-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.seat-timer {
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ca8a04;
+  letter-spacing: 0.04em;
+}
+
+.seat-price {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.selected-price {
+  color: var(--purple-vivid);
+  font-weight: 700;
+  font-size: 0.6rem;
+}
+
+.seat-confirmed {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #ef4444;
+}
+
+/* ─── Craft rear ─── */
+.craft-rear {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-left: 3px solid #e2e8f0;
+  border-right: 3px solid #e2e8f0;
+  border-bottom: 3px solid #e2e8f0;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0 2rem;
+  position: relative;
+}
+
+.engines {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  position: absolute;
+  bottom: -20px;
+}
+
+.engine {
+  width: 40px;
+  height: 30px;
+  background: #94a3b8;
+  border-radius: 4px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  position: relative;
+}
+
+.engine-glow {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 35px;
+  background: radial-gradient(ellipse at top, #fef08a 0%, #f97316 60%, transparent 100%);
+  border-radius: 50%;
+  animation: flicker 0.1s infinite alternate;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.8; height: 35px; }
+  100% { opacity: 1; height: 40px; }
+}
+/* ─── Checkout Panel ─── */
+.checkout-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s ease,
+    margin-top 0.35s ease;
+  margin-top: 0;
+}
+
+.checkout-visible {
+  max-height: 300px;
+  opacity: 1;
+  margin-top: 1.5rem;
+}
+
+.checkout-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkout-seats {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.checkout-seat-tag {
+  background: #eff6ff;
+  border: 1px solid var(--purple-soft);
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--purple-vivid);
+  letter-spacing: 0.05em;
+}
+
+.checkout-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.checkout-total-label {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.checkout-total-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--purple-vivid);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* The big Checkout CTA button */
+.checkout-btn {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border-radius: 14px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
+
+  background: var(--purple-vivid);
+  color: #fff;
+}
+
+.checkout-btn::before {
+  display: none;
+}
+
+.checkout-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--purple-soft);
+}
+
+.checkout-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.checkout-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+.checkout-btn-loading {
+  background: var(--purple-soft);
+}
+
+.checkout-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.checkout-hint {
+  margin-top: 0.65rem;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 480px) {
+  .seatmap-container { padding: 1.25rem 0.8rem; }
+  .seat-btn { min-height: 60px; }
+  .seat-icon { font-size: 1rem; }
+  .checkout-btn { font-size: 0.9rem; padding: 0.85rem 1rem; }
+  .checkout-total-price { font-size: 1.1rem; }
+}
