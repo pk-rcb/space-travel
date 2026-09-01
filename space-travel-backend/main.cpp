@@ -116,6 +116,28 @@ void registerOptionsHandler(const std::string &path)
         {drogon::Options});
 }
 
+// Helper to securely parse Upstash rediss:// URLs
+sw::redis::Redis getRedisClient() {
+    std::string connStr = globalConfig.redis_connection;
+    bool use_tls = false;
+    
+    // redis-plus-plus Uri class only natively supports tcp:// or unix://
+    if (connStr.find("rediss://") == 0) {
+        use_tls = true;
+        connStr.replace(0, 9, "tcp://");
+    } else if (connStr.find("redis://") == 0) {
+        connStr.replace(0, 8, "tcp://");
+    }
+    
+    sw::redis::Uri uri(connStr);
+    auto opts = uri.connection_options();
+    if (use_tls) {
+        opts.tls.enabled = true;
+    }
+    
+    return sw::redis::Redis(opts);
+}
+
 int main()
 {
     loadConfig();
