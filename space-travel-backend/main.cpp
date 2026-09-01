@@ -72,7 +72,10 @@ void publishMessageToQueue(const std::string &message)
         std::cerr << "[RabbitMQ] amqp_socket_open failed: " << status << std::endl;
         return;
     }
-    amqp_rpc_reply_t login_reply = amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, globalConfig.rabbitmq_user.c_str(), globalConfig.rabbitmq_pass.c_str());
+    // CloudAMQP requires the vhost to match the username (default is "/")
+    std::string vhost = (globalConfig.rabbitmq_user == "guest") ? "/" : globalConfig.rabbitmq_user;
+
+    amqp_rpc_reply_t login_reply = amqp_login(conn, vhost.c_str(), 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, globalConfig.rabbitmq_user.c_str(), globalConfig.rabbitmq_pass.c_str());
     if (login_reply.reply_type != AMQP_RESPONSE_NORMAL) {
         std::cerr << "[RabbitMQ] amqp_login failed" << std::endl;
         return;

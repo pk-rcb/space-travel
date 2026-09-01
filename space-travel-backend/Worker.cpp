@@ -105,7 +105,10 @@ int main()
     amqp_connection_state_t conn = amqp_new_connection();
     amqp_socket_t *socket = amqp_tcp_socket_new(conn);
     amqp_socket_open(socket, rmq_host.c_str(), rmq_port);
-    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, rmq_user.c_str(), rmq_pass.c_str());
+    // CloudAMQP requires the vhost to match the username
+    std::string vhost = (rmq_user == "guest") ? "/" : rmq_user;
+
+    amqp_login(conn, vhost.c_str(), 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, rmq_user.c_str(), rmq_pass.c_str());
     amqp_channel_open(conn, 1);
 
     // 2. Ensure the queue exists
