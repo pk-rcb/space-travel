@@ -9,11 +9,12 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install redis-plus-plus from source
-RUN git clone https://github.com/sewenew/redis-plus-plus.git /tmp/redis-plus-plus && \
+# Install redis-plus-plus from source with TLS enabled (Needed for Upstash)
+RUN apt-get update && apt-get install -y libssl-dev && \
+    git clone https://github.com/sewenew/redis-plus-plus.git /tmp/redis-plus-plus && \
     cd /tmp/redis-plus-plus && \
     mkdir build && cd build && \
-    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 .. && \
+    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 -DREDIS_PLUS_PLUS_USE_TLS=ON .. && \
     make && \
     make install && \
     ldconfig
