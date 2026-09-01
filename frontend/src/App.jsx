@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { FlightProvider } from './context/FlightContext';
 import Nav from './components/Nav';
 import AdminView from './components/AdminView';
+import AdminLogin from './components/AdminLogin';
 import PassengerView from './components/PassengerView';
 import KioskView from './components/KioskView';
 import './App.css';
 
 export default function App() {
-  const [activeView, setActiveView]     = useState('admin');
+  const [activeView, setActiveView]     = useState('passenger');
+  const [isAdminAuth, setIsAdminAuth]   = useState(false);
   const [notification, setNotification] = useState(null);
 
   const showNotification = (type, msg) => {
@@ -50,7 +52,11 @@ export default function App() {
         {/* ── View container ── */}
         <main className="view-container">
           {activeView === 'admin' && (
-            <AdminView onScheduled={() => setActiveView('passenger')} />
+            isAdminAuth ? (
+              <AdminView onScheduled={() => setActiveView('passenger')} />
+            ) : (
+              <AdminLogin onLogin={() => setIsAdminAuth(true)} />
+            )
           )}
           {activeView === 'passenger' && (
             <PassengerView onNotification={showNotification} />

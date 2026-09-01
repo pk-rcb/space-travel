@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useRazorpay } from 'react-razorpay';
 import './SeatMap.css';
 
 // ─────────────────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ export default function SeatMap({ flightInfo, passengerName, journeyDate, onNoti
   const [seats, setSeats] = useState(initSeats);
   const [checkingOut, setCheckingOut] = useState(false); // true while checkout API calls are in-flight
   const [counters, setCounters] = useState({}); // { seatId: secondsLeft }
+  const { Razorpay } = useRazorpay();
 
   // Hydration: apply server-reported booked seats when initialBookedCodes arrives
   useEffect(() => {
@@ -176,16 +178,59 @@ export default function SeatMap({ flightInfo, passengerName, journeyDate, onNoti
       flightId: flightInfo.flightId,
     });
 
-    if (result.ok || result.status === 202) {
-      // 202 Accepted — Redis lock acquired, message queued in RabbitMQ.
-      // Seat stays HELD (yellow) until the server confirms the PostgreSQL write.
+    if ((result.ok || result.status === 200 || result.status === 202) && result.data.order_id) {
+      // Redis lock acquired, Razorpay order created.
       setSeats(prev =>
         prev.map(s => s.id === seat.id ? { ...s, status: 'held' } : s)
       );
-      onNotification('success',
-        `Seat ${seat.seatCode} locked! Waiting for server confirmation…`);
       startCountdown(seat.id);
-      pollForConfirmation(seat); // polls every 3 s — no fake timer
+      onNotification('success', `Seat ${seat.seatCode} locked! Opening secure checkout...`);
+      
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use the .env variable
+        amount: flightInfo.price * 100, // Amount is in currency subunits
+        currency: "INR",
+        name: "StarRoute Interplanetary",
+        description: `Ticket for Seat ${seat.seatCode}`,
+        order_id: result.data.order_id,
+        handler: async function (response) {
+          try {
+            // Verify payment
+            const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            if (verifyRes.ok) {
+              onNotification('success', `Payment verified! Finalizing booking for ${seat.seatCode}...`);
+              pollForConfirmation(seat);
+            } else {
+              const errData = await verifyRes.json();
+              onNotification('error', `Payment verification failed: ${errData.error}`);
+            }
+          } catch (e) {
+            onNotification('error', `Network error during verification for ${seat.seatCode}.`);
+          }
+        },
+        prefill: {
+          name: passengerName || 'Anonymous',
+          email: "spaceman@starroute.com",
+          contact: "9999999999"
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        onNotification('error', `Payment failed: ${response.error.description}`);
+      });
+      rzp.open();
 
     } else if (result.status === 409) {
       // 409 Conflict — Redis lock already held by another user

@@ -2,9 +2,9 @@ import React from 'react';
 import './Nav.css';
 
 const VIEWS = [
-  { id: 'admin',     label: 'Command Center',   sub: 'Admin'     },
   { id: 'passenger', label: 'Booking Terminal',  sub: 'Passenger' },
   { id: 'kiosk',     label: 'My Boarding Pass',  sub: 'Kiosk'     },
+  { id: 'admin',     label: 'Admin? Click here', sub: 'Admin'     },
 ];
 
 export default function Nav({ activeView, onNavigate }) {

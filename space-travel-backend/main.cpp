@@ -7,6 +7,10 @@
 #include <jsoncpp/json/json.h>
 #include <sw/redis++/redis++.h>
 #include "DatabaseConnection.h"
+#include <openssl/hmac.h>
+#include <drogon/HttpClient.h>
+#include <iomanip>
+#include <sstream>
 
 using namespace sw::redis;
 
@@ -18,6 +22,8 @@ struct AppConfig {
     std::string rabbitmq_user = "guest";
     std::string rabbitmq_pass = "guest";
     std::string redis_connection = "tcp://localhost:6379";
+    std::string razorpay_key_id = "";
+    std::string razorpay_key_secret = "";
 };
 
 AppConfig globalConfig;
@@ -32,23 +38,52 @@ void loadConfig() {
         if (config.isMember("rabbitmq_user")) globalConfig.rabbitmq_user = config["rabbitmq_user"].asString();
         if (config.isMember("rabbitmq_pass")) globalConfig.rabbitmq_pass = config["rabbitmq_pass"].asString();
         if (config.isMember("redis_connection")) globalConfig.redis_connection = config["redis_connection"].asString();
+        if (config.isMember("razorpay_key_id")) globalConfig.razorpay_key_id = config["razorpay_key_id"].asString();
+        if (config.isMember("razorpay_key_secret")) globalConfig.razorpay_key_secret = config["razorpay_key_secret"].asString();
     }
 }
+
 
 // RabbitMQ Message Publisher
 void publishMessageToQueue(const std::string &message)
 {
+    std::cout << "[RabbitMQ] Connecting to " << globalConfig.rabbitmq_host << ":" << globalConfig.rabbitmq_port << "..." << std::endl;
     amqp_connection_state_t conn = amqp_new_connection();
     amqp_socket_t *socket = amqp_tcp_socket_new(conn);
-    amqp_socket_open(socket, globalConfig.rabbitmq_host.c_str(), globalConfig.rabbitmq_port);
-    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, globalConfig.rabbitmq_user.c_str(), globalConfig.rabbitmq_pass.c_str());
+    if (!socket) {
+        std::cerr << "[RabbitMQ] amqp_tcp_socket_new failed" << std::endl;
+        return;
+    }
+    int status = amqp_socket_open(socket, globalConfig.rabbitmq_host.c_str(), globalConfig.rabbitmq_port);
+    if (status != 0) {
+        std::cerr << "[RabbitMQ] amqp_socket_open failed: " << status << std::endl;
+        return;
+    }
+    amqp_rpc_reply_t login_reply = amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, globalConfig.rabbitmq_user.c_str(), globalConfig.rabbitmq_pass.c_str());
+    if (login_reply.reply_type != AMQP_RESPONSE_NORMAL) {
+        std::cerr << "[RabbitMQ] amqp_login failed" << std::endl;
+        return;
+    }
     amqp_channel_open(conn, 1);
+    amqp_rpc_reply_t channel_reply = amqp_get_rpc_reply(conn);
+    if (channel_reply.reply_type != AMQP_RESPONSE_NORMAL) {
+        std::cerr << "[RabbitMQ] amqp_channel_open failed" << std::endl;
+        return;
+    }
 
     amqp_bytes_t message_bytes;
     message_bytes.len = message.length();
     message_bytes.bytes = (void *)message.c_str();
 
-    amqp_basic_publish(conn, 1, amqp_cstring_bytes(""), amqp_cstring_bytes("booking_queue"), 0, 0, NULL, message_bytes);
+    // Declare queue to ensure it exists before publishing!
+    amqp_queue_declare(conn, 1, amqp_cstring_bytes("booking_queue"), 0, 0, 0, 0, amqp_empty_table);
+
+    int pub_status = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""), amqp_cstring_bytes("booking_queue"), 0, 0, NULL, message_bytes);
+    if (pub_status != AMQP_STATUS_OK) {
+        std::cerr << "[RabbitMQ] amqp_basic_publish failed: " << pub_status << std::endl;
+    } else {
+        std::cout << "[RabbitMQ] Message successfully published!" << std::endl;
+    }
 
     amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
     amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
@@ -86,6 +121,7 @@ int main()
 
     // Register all CORS Preflight OPTIONS routes cleanly
     registerOptionsHandler("/api/book");
+    registerOptionsHandler("/api/payment/verify");
     registerOptionsHandler("/api/seats");
     registerOptionsHandler("/api/booking/status");
     registerOptionsHandler("/api/ticket");
@@ -195,16 +231,127 @@ int main()
                 return;
             }
 
-            std::cout << "[API] Redis Lock Acquired for Seat " << seatCode << "! Routing to RabbitMQ..." << std::endl;
+            std::cout << "[API] Redis Lock Acquired! Creating Razorpay Order..." << std::endl;
+            
+            auto client = drogon::HttpClient::newHttpClient("https://api.razorpay.com");
+            auto reqOut = drogon::HttpRequest::newHttpRequest();
+            reqOut->setMethod(drogon::Post);
+            reqOut->setPath("/v1/orders");
+            
+            std::string auth = globalConfig.razorpay_key_id + ":" + globalConfig.razorpay_key_secret;
+            reqOut->addHeader("Authorization", "Basic " + drogon::utils::base64Encode((const unsigned char*)auth.c_str(), auth.length()));
+            reqOut->addHeader("Content-Type", "application/json");
+            
+            Json::Value rzpPayload;
+            rzpPayload["amount"] = 25000000; // 250000 INR in paise
+            rzpPayload["currency"] = "INR";
+            rzpPayload["receipt"] = "rcptid_" + seatCode;
+            
+            Json::FastWriter reqWriter;
+            reqOut->setBody(reqWriter.write(rzpPayload));
+            
+            client->sendRequest(reqOut, [callback, jsonReq](drogon::ReqResult result, const drogon::HttpResponsePtr &respOut) {
+                if (result == drogon::ReqResult::Ok && respOut->getStatusCode() == 200) {
+                    auto rzpResp = respOut->getJsonObject();
+                    std::string orderId = (*rzpResp)["id"].asString();
+                    
+                    // Save booking payload to Redis
+                    Json::FastWriter writer;
+                    std::string payloadStr = writer.write(*jsonReq);
+                    auto redis = sw::redis::Redis(globalConfig.redis_connection);
+                    redis.set("booking:order:" + orderId, payloadStr, std::chrono::minutes(5));
+                    
+                    Json::Value success;
+                    success["status"] = "Order Created";
+                    success["order_id"] = orderId;
+                    auto resp = drogon::HttpResponse::newHttpJsonResponse(success);
+                    resp->setStatusCode(drogon::k200OK);
+                    callback(resp);
+                } else {
+                    Json::Value error;
+                    error["error"] = "Failed to create Razorpay Order";
+                    auto resp = drogon::HttpResponse::newHttpJsonResponse(error);
+                    resp->setStatusCode(drogon::k500InternalServerError);
+                    callback(resp);
+                }
+            });
+        },
+        {drogon::Post});
 
-            Json::FastWriter writer;
-            std::string payloadStr = writer.write(*jsonReq);
-            publishMessageToQueue(payloadStr);
-
+    // ==========================================
+    // 3.5 POST PAYMENT VERIFY
+    // ==========================================
+    drogon::app().registerHandler(
+        "/api/payment/verify",
+        [](const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback)
+        {
+            std::cout << "\n[API] /api/payment/verify hit!" << std::endl;
+            auto jsonReq = req->getJsonObject();
+            if (!jsonReq || !jsonReq->isMember("razorpay_order_id") || !jsonReq->isMember("razorpay_payment_id") || !jsonReq->isMember("razorpay_signature"))
+            {
+                std::cout << "[API] Missing Razorpay details in payload." << std::endl;
+                Json::Value error;
+                error["error"] = "Missing Razorpay details";
+                auto resp = drogon::HttpResponse::newHttpJsonResponse(error);
+                resp->setStatusCode(drogon::k400BadRequest);
+                callback(resp);
+                return;
+            }
+            
+            std::string order_id = (*jsonReq)["razorpay_order_id"].asString();
+            std::string payment_id = (*jsonReq)["razorpay_payment_id"].asString();
+            std::string signature = (*jsonReq)["razorpay_signature"].asString();
+            
+            std::cout << "[API] Verifying payment " << payment_id << " for order " << order_id << std::endl;
+            
+            std::string payload = order_id + "|" + payment_id;
+            std::string secret = globalConfig.razorpay_key_secret;
+            
+            unsigned char* digest;
+            digest = HMAC(EVP_sha256(), secret.c_str(), secret.length(), (unsigned char*)payload.c_str(), payload.length(), NULL, NULL);
+            
+            std::stringstream ss;
+            for(int i = 0; i < 32; i++) {
+                ss << std::hex << std::setw(2) << std::setfill('0') << (int)digest[i];
+            }
+            std::string generated_signature = ss.str();
+            
+            if (generated_signature != signature) {
+                std::cout << "[API] Signature mismatch! Expected: " << generated_signature << " Got: " << signature << std::endl;
+                Json::Value error;
+                error["error"] = "Invalid Signature";
+                auto resp = drogon::HttpResponse::newHttpJsonResponse(error);
+                resp->setStatusCode(drogon::k400BadRequest);
+                callback(resp);
+                return;
+            }
+            
+            std::cout << "[API] Signature matched. Fetching from Redis..." << std::endl;
+            
+            // Signature valid, retrieve booking details from Redis
+            auto redis = sw::redis::Redis(globalConfig.redis_connection);
+            auto bookingPayloadStr = redis.get("booking:order:" + order_id);
+            if (!bookingPayloadStr) {
+                std::cout << "[API] Redis key booking:order:" << order_id << " not found!" << std::endl;
+                Json::Value error;
+                error["error"] = "Booking session expired or invalid";
+                auto resp = drogon::HttpResponse::newHttpJsonResponse(error);
+                resp->setStatusCode(drogon::k400BadRequest);
+                callback(resp);
+                return;
+            }
+            
+            std::cout << "[API] Found payload, publishing to RabbitMQ..." << std::endl;
+            
+            // Publish to RabbitMQ
+            publishMessageToQueue(*bookingPayloadStr);
+            
+            std::cout << "[API] Successfully queued for processing!" << std::endl;
+            
             Json::Value success;
-            success["status"] = "Booking received and queued for processing!";
+            success["status"] = "Payment Verified and Ticket Booked!";
             auto resp = drogon::HttpResponse::newHttpJsonResponse(success);
-            resp->setStatusCode(drogon::k202Accepted);
+            resp->setStatusCode(drogon::k200OK);
             callback(resp);
         },
         {drogon::Post});

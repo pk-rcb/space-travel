@@ -17,6 +17,7 @@ find_package(PostgreSQL REQUIRED)
 find_path(PQXX_INCLUDE_DIR pqxx/pqxx)
 find_library(PQXX_LIBRARY pqxx)
 find_package(Drogon CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # Include your source files
 # Include your source files
@@ -39,7 +40,7 @@ target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY})
 # ADD 'rabbitmq' TO THE END OF THIS LINE:
 target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq)
 # <-- ADD drogon::drogon TO THIS LINE:
-target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq Drogon::Drogon redis++ hiredis)
+target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq Drogon::Drogon redis++ hiredis OpenSSL::SSL OpenSSL::Crypto)
 
 # --- Executable 2: The Background Worker ---
 # Notice this list has Worker.cpp, but NOT main.cpp
