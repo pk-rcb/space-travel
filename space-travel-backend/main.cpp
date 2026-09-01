@@ -24,11 +24,13 @@ struct AppConfig {
     std::string redis_connection = "tcp://localhost:6379";
     std::string razorpay_key_id = "";
     std::string razorpay_key_secret = "";
+    int port = 8080;
 };
 
 AppConfig globalConfig;
 
 void loadConfig() {
+    // 1. Load from local JSON (if it exists)
     std::ifstream file("backend_config.json");
     if (file.is_open()) {
         Json::Value config;
@@ -40,7 +42,18 @@ void loadConfig() {
         if (config.isMember("redis_connection")) globalConfig.redis_connection = config["redis_connection"].asString();
         if (config.isMember("razorpay_key_id")) globalConfig.razorpay_key_id = config["razorpay_key_id"].asString();
         if (config.isMember("razorpay_key_secret")) globalConfig.razorpay_key_secret = config["razorpay_key_secret"].asString();
+        if (config.isMember("port")) globalConfig.port = config["port"].asInt();
     }
+
+    // 2. Override with Environment Variables (Cloud Native)
+    if (std::getenv("RABBITMQ_HOST")) globalConfig.rabbitmq_host = std::getenv("RABBITMQ_HOST");
+    if (std::getenv("RABBITMQ_PORT")) globalConfig.rabbitmq_port = std::stoi(std::getenv("RABBITMQ_PORT"));
+    if (std::getenv("RABBITMQ_USER")) globalConfig.rabbitmq_user = std::getenv("RABBITMQ_USER");
+    if (std::getenv("RABBITMQ_PASS")) globalConfig.rabbitmq_pass = std::getenv("RABBITMQ_PASS");
+    if (std::getenv("REDIS_URL")) globalConfig.redis_connection = std::getenv("REDIS_URL");
+    if (std::getenv("RAZORPAY_KEY_ID")) globalConfig.razorpay_key_id = std::getenv("RAZORPAY_KEY_ID");
+    if (std::getenv("RAZORPAY_KEY_SECRET")) globalConfig.razorpay_key_secret = std::getenv("RAZORPAY_KEY_SECRET");
+    if (std::getenv("PORT")) globalConfig.port = std::stoi(std::getenv("PORT"));
 }
 
 
@@ -556,8 +569,8 @@ int main()
         },
         {drogon::Get});
 
-    std::cout << "Listening for web traffic on http://0.0.0.0:8080" << std::endl;
-    drogon::app().addListener("0.0.0.0", 8080).run();
+    std::cout << "Listening for web traffic on http://0.0.0.0:" << globalConfig.port << std::endl;
+    drogon::app().addListener("0.0.0.0", globalConfig.port).run();
 
     return 0;
 }

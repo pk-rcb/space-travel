@@ -93,11 +93,19 @@ int main()
     std::cout << "--- Space Travel Background Worker Started ---" << std::endl;
     std::cout << "Listening for messages on RabbitMQ 'booking_queue'..." << std::endl;
 
+    // Load Environment Variables for Cloud Deployment
+    std::string rmq_host = std::getenv("RABBITMQ_HOST") ? std::getenv("RABBITMQ_HOST") : "localhost";
+    int rmq_port = std::getenv("RABBITMQ_PORT") ? std::stoi(std::getenv("RABBITMQ_PORT")) : 5672;
+    std::string rmq_user = std::getenv("RABBITMQ_USER") ? std::getenv("RABBITMQ_USER") : "guest";
+    std::string rmq_pass = std::getenv("RABBITMQ_PASS") ? std::getenv("RABBITMQ_PASS") : "guest";
+
+    std::cout << "[Worker] Connecting to RabbitMQ at " << rmq_host << ":" << rmq_port << std::endl;
+
     // 1. Connect to RabbitMQ
     amqp_connection_state_t conn = amqp_new_connection();
     amqp_socket_t *socket = amqp_tcp_socket_new(conn);
-    amqp_socket_open(socket, "localhost", 5672);
-    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest");
+    amqp_socket_open(socket, rmq_host.c_str(), rmq_port);
+    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, rmq_user.c_str(), rmq_pass.c_str());
     amqp_channel_open(conn, 1);
 
     // 2. Ensure the queue exists
