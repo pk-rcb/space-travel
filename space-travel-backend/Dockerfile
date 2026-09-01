@@ -5,7 +5,18 @@ RUN apt-get update && apt-get install -y \
     libpqxx-dev \
     librabbitmq-dev \
     libjsoncpp-dev \
+    libhiredis-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Install redis-plus-plus from source
+RUN git clone https://github.com/sewenew/redis-plus-plus.git /tmp/redis-plus-plus && \
+    cd /tmp/redis-plus-plus && \
+    mkdir build && cd build && \
+    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 .. && \
+    make && \
+    make install && \
+    ldconfig
 
 WORKDIR /app
 COPY . .
@@ -23,6 +34,7 @@ RUN apt-get update && apt-get install -y \
     libpqxx-dev \
     librabbitmq-dev \
     libjsoncpp-dev \
+    libhiredis-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -30,6 +42,10 @@ WORKDIR /app
 # Copy the compiled executables
 COPY --from=builder /app/build/SpaceTravelSystem .
 COPY --from=builder /app/build/SpaceTravelWorker .
+
+# Copy redis-plus-plus libraries from builder stage
+COPY --from=builder /usr/local/lib/libredis++.so* /usr/local/lib/
+RUN ldconfig
 
 # Create a startup script that runs BOTH the Worker and the API
 RUN echo '#!/bin/bash\n\
@@ -40,3 +56,4 @@ echo "Starting SpaceTravelSystem API..."\n\
 ' > start.sh && chmod +x start.sh
 
 CMD ["./start.sh"]
+
