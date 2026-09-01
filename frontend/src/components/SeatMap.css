@@ -472,10 +472,16 @@
 }
 
 /* ─── Responsive ─── */
-@media (max-width: 480px) {
-  .seatmap-container { padding: 1.25rem 0.8rem; }
-  .seat-btn { min-height: 60px; }
-  .seat-icon { font-size: 1rem; }
+@media (max-width: 580px) {
+  .seatmap-container { padding: 1rem 0.5rem; border-radius: 8px; }
+  .rocket-body { padding: 1rem 0.75rem; }
+  .seat-btn { min-height: 52px; padding: 0.25rem 0.1rem; }
+  .seat-icon { font-size: 0.85rem; }
+  .seatmap-title { font-size: 1.25rem; }
+  .seat-row { gap: 0.25rem; }
+  .seat-pair { gap: 0.25rem; }
+  .seat-aisle { width: 1.5rem; }
+  .row-label { font-size: 0.6rem; width: 0.7rem; }
   .checkout-btn { font-size: 0.9rem; padding: 0.85rem 1rem; }
   .checkout-total-price { font-size: 1.1rem; }
 }
