@@ -305,8 +305,8 @@ export default function PassengerView({ onNotification }) {
                   <span className="meta-value">{flightInfo.craft}</span>
                 </div>
                 <div className="meta-item">
-                  <span className="meta-label">Seat Price</span>
-                  <span className="meta-value price">${flightInfo.price.toLocaleString()}</span>
+                  <span className="meta-label">Ticket Price</span>
+                  <span className="meta-value price">₹{flightInfo.price.toLocaleString()}</span>
                 </div>
               </div>
             </div>

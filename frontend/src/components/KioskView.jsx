@@ -271,9 +271,9 @@ export default function KioskView() {
                 <span className="bp-stub-label">SPACECRAFT</span>
                 <span className="bp-stub-value">{t.craft || 'Starship Ares IX'}</span>
               </div>
-              <div className="bp-stub-row">
-                <span className="bp-stub-label">PRICE PAID</span>
-                <span className="bp-stub-value">${(t.price || 250000).toLocaleString()}</span>
+              <div className="bp-stub-info">
+                <span className="bp-stub-label">Price Paid</span>
+                <span className="bp-stub-value">₹{(t.price || 250000).toLocaleString()}</span>
               </div>
             </div>
 

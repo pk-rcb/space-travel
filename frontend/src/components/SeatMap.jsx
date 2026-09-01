@@ -376,7 +376,7 @@ export default function SeatMap({ flightInfo, passengerName, journeyDate, onNoti
             </div>
             <div className="checkout-total">
               <span className="checkout-total-label">Total</span>
-              <span className="checkout-total-price">${totalPrice.toLocaleString()}</span>
+              <span className="checkout-total-price">₹{totalPrice.toLocaleString()}</span>
             </div>
           </div>
           <button
@@ -427,9 +427,9 @@ function SeatButton({ seat, countdown, onClick, disabled, price }) {
   };
 
   const formatPrice = (p) => {
-    if (!p) return '$250K';
-    if (p >= 1000) return `$${(p / 1000).toFixed(0)}K`;
-    return `$${p}`;
+    if (!p) return '₹250K';
+    if (p >= 1000) return `₹${(p / 1000).toFixed(0)}K`;
+    return `₹${p}`;
   };
 
   return (
