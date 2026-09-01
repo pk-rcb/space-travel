@@ -1,5 +1,8 @@
 FROM drogonframework/drogon:latest AS builder
 
+# Remove pre-installed hiredis (if any) so it doesn't conflict with our SSL build
+RUN apt-get update && apt-get remove -y libhiredis-dev libhiredis* || true
+
 # Install necessary libraries for PostgreSQL and RabbitMQ
 RUN apt-get update && apt-get install -y \
     libpqxx-dev \
@@ -13,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 RUN git clone https://github.com/redis/hiredis.git /tmp/hiredis && \
     cd /tmp/hiredis && \
     make USE_SSL=1 && \
-    make PREFIX=/usr/local install && \
+    make PREFIX=/usr/local USE_SSL=1 install && \
     ldconfig
 
 # Install redis-plus-plus from source with TLS enabled (Needed for Upstash)
@@ -37,6 +40,8 @@ RUN mkdir build && cd build && \
 FROM drogonframework/drogon:latest
 
 # We need the shared libraries in the final image too
+RUN apt-get update && apt-get remove -y libhiredis-dev libhiredis* || true
+
 RUN apt-get update && apt-get install -y \
     libpqxx-dev \
     librabbitmq-dev \
