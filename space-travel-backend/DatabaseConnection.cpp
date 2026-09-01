@@ -55,10 +55,27 @@ DatabaseConnection &DatabaseConnection::getInstance()
 
 pqxx::connection &DatabaseConnection::getConnection()
 {
-    // The Segmentation Fault Shield
     if (conn == nullptr || !conn->is_open())
     {
-        throw std::runtime_error("FATAL: Database pointer is null! Your Windows IP address likely changed again.");
+        std::cout << "Database connection dropped. Attempting to reconnect..." << std::endl;
+        std::string connStr = "dbname=space_travel user=postgres host=localhost port=5432";
+        if (std::getenv("DATABASE_URL")) {
+            connStr = std::getenv("DATABASE_URL");
+        } else {
+            std::ifstream file("backend_config.json");
+            if (file.is_open()) {
+                Json::Value config;
+                file >> config;
+                if (config.isMember("db_connection")) connStr = config["db_connection"].asString();
+            }
+        }
+        
+        conn = std::make_unique<pqxx::connection>(connStr);
+        
+        if (!conn || !conn->is_open()) {
+            throw std::runtime_error("FATAL: Failed to reconnect to the database!");
+        }
+        std::cout << "Reconnection successful!" << std::endl;
     }
 
     return *conn;
