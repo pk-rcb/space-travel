@@ -36,11 +36,7 @@ set(SOURCES
 set(MAIN_SOURCES main.cpp DatabaseConnection.cpp Planet.cpp Traveller.cpp Ticket.cpp)
 add_executable(SpaceTravelSystem ${MAIN_SOURCES})
 target_include_directories(SpaceTravelSystem PRIVATE ${PostgreSQL_INCLUDE_DIRS} ${PQXX_INCLUDE_DIR})
-target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY})
-# ADD 'rabbitmq' TO THE END OF THIS LINE:
-target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq)
-# <-- ADD drogon::drogon TO THIS LINE:
-target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq Drogon::Drogon redis++ hiredis OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(SpaceTravelSystem ${PostgreSQL_LIBRARIES} ${PQXX_LIBRARY} rabbitmq Drogon::Drogon redis++ hiredis hiredis_ssl OpenSSL::SSL OpenSSL::Crypto)
 
 # --- Executable 2: The Background Worker ---
 # Notice this list has Worker.cpp, but NOT main.cpp
