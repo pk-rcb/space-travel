@@ -230,7 +230,7 @@ int main()
 
             std::cout << "\n[API] Incoming request for Seat " << seatCode << " on flight_id " << flightId << ". Checking Redis..." << std::endl;
 
-            auto redis = sw::redis::Redis(globalConfig.redis_connection);
+            auto redis = getRedisClient();
             bool lockAcquired = redis.set(lockKey, "held", std::chrono::minutes(5), sw::redis::UpdateType::NOT_EXIST);
 
             if (!lockAcquired)
@@ -271,7 +271,7 @@ int main()
                     // Save booking payload to Redis
                     Json::FastWriter writer;
                     std::string payloadStr = writer.write(*jsonReq);
-                    auto redis = sw::redis::Redis(globalConfig.redis_connection);
+                    auto redis = getRedisClient();
                     redis.set("booking:order:" + orderId, payloadStr, std::chrono::minutes(5));
                     
                     Json::Value success;
@@ -342,7 +342,7 @@ int main()
             std::cout << "[API] Signature matched. Fetching from Redis..." << std::endl;
             
             // Signature valid, retrieve booking details from Redis
-            auto redis = sw::redis::Redis(globalConfig.redis_connection);
+            auto redis = getRedisClient();
             auto bookingPayloadStr = redis.get("booking:order:" + order_id);
             if (!bookingPayloadStr) {
                 std::cout << "[API] Redis key booking:order:" << order_id << " not found!" << std::endl;
