@@ -22,6 +22,11 @@ DatabaseConnection::DatabaseConnection()
             std::cerr << "Warning: backend_config.json not found!" << std::endl;
         }
 
+        // Override with environment variable for Cloud deployment
+        if (std::getenv("DATABASE_URL")) {
+            connStr = std::getenv("DATABASE_URL");
+        }
+
         // FIX: Using std::make_unique because 'conn' is a smart pointer!
         conn = std::make_unique<pqxx::connection>(connStr);
 
